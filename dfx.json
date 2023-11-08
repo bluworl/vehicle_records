@@ -1,0 +1,13 @@
+{
+    "canisters": {
+        "Vehicle_Records": {
+            "type": "custom",
+            "main": "src/index.ts",
+            "candid": "src/index.did",
+            "build": "npx azle Vehicle_Records",
+            "wasm": ".azle/Vehicle_Records/Vehicle_Records.wasm",
+            "gzip": true
+        }
+    }
+}
+
