@@ -1,7 +1,6 @@
-import { query, update, Canister, Record, StableBTreeMap, Ok, None, Some, Err, Result, text,int, Variant, nat64, ic, Opt, Vec } from 'azle';
+import { query, update, Canister, Record, StableBTreeMap, Ok, Err, Some, None, Option, Vec, text, int, Variant, nat64, ic, Opt } from 'azle';
 import { v4 as uuidv4 } from 'uuid';
 
-// Define vehicle data structure
 const VehicleData = Record({
   latitude: text,
   longitude: text,
@@ -23,65 +22,60 @@ const Vehicle = Record({
 
 const Error = Variant({ NotFound: text, InvalidPayload: text });
 
-// Stable storage for vehicles
 const vehiclesStorage = StableBTreeMap(text, Vehicle, 0);
 
 export default Canister({
-  // Add a vehicle to vehiclesStorage
-  addVehicle: update([VehicleData], Result(Vehicle, Error), (data) => {
-    const vehicle = { id: uuidv4(), createdAt: ic.time(), updatedAt: None, ...data };
-    vehiclesStorage.insert(vehicle.id, vehicle);
-    return Ok(vehicle);
+  addVehicle: update([VehicleData], Option(Vehicle), (data) => {
+    const vehicleId = uuidv4();
+    const vehicle = {
+      id: vehicleId,
+      createdAt: ic.time(),
+      updatedAt: None,
+      ...data,
+    };
+    vehiclesStorage.insert(vehicleId, vehicle);
+    return Some(vehicle);
   }),
 
-  // Get all vehicles from the storage
-  getVehicles: query([], Result(Vec(Vehicle), Error), () => {
-    return Ok(vehiclesStorage.values());
+  getVehicles: query([], Vec(Vehicle), () => {
+    return vehiclesStorage.values();
   }),
 
-  // Get a specific vehicle from the storage using the id
   getVehicle: query([text], Result(Vehicle, Error), (id) => {
     const vehicleOpt = vehiclesStorage.get(id);
-    if ("None" in vehicleOpt) {
+    if (vehicleOpt.isNone()) {
       return Err({ NotFound: `Vehicle with id=${id} not found` });
     }
-    return Ok(vehicleOpt.Some);
+    return Ok(vehicleOpt.unwrap());
   }),
 
-  // Update a vehicle already in the storage using the id
-  updateVehicle: update([text, VehicleData], Result(Vehicle, Error), (id, data) => {
+  updateVehicle: update([text, VehicleData], Option(Vehicle), (id, data) => {
     const vehicleOpt = vehiclesStorage.get(id);
-    if ("None" in vehicleOpt) {
-      return Err({ NotFound: `Couldn't update vehicle with id=${id}. Vehicle not found` });
+    if (vehicleOpt.isNone()) {
+      return None;
     }
-    const vehicle = vehicleOpt.Some;
-    const updatedVehicle = { ...vehicle, ...data, updatedAt: Some(ic.time()) };
-    vehiclesStorage.insert(vehicle.id, updatedVehicle);
-    return Ok(updatedVehicle);
+    const existingVehicle = vehicleOpt.unwrap();
+    const updatedVehicle = {
+      ...existingVehicle,
+      ...data,
+      updatedAt: Some(ic.time()),
+    };
+    vehiclesStorage.insert(id, updatedVehicle);
+    return Some(updatedVehicle);
   }),
 
-  // Delete a vehicle from the storage using the id
-  deleteVehicle: update([text], Result(Vehicle, Error), (id) => {
+  deleteVehicle: update([text], Option(Vehicle), (id) => {
     const deletedVehicle = vehiclesStorage.remove(id);
-    if ("None" in deletedVehicle) {
-      return Err({ NotFound: `Couldn't delete vehicle with id=${id}. Vehicle not found` });
-    }
-    return Ok(deletedVehicle.Some);
+    return deletedVehicle.unwrapOr(None);
   })
 });
 
-// Existing globalThis.crypto code remains unchanged
-
-globalThis.crypto = { 
-    // @ts-ignore 
-    getRandomValues: () => { let array = new Uint8Array(32);
-
+globalThis.crypto = {
+  getRandomValues: () => {
+    let array = new Uint8Array(32);
     for (let i = 0; i < array.length; i++) {
-        array[i] = Math.floor(Math.random() * 256);
+      array[i] = Math.floor(Math.random() * 256);
     }
-
     return array;
-}
-
+  }
 };
-
