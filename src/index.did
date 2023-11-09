@@ -1,7 +1,38 @@
-service: () -> {
-    addVehicle: (record {latitude:text; vehicleType:text; licensePlate:text; fuelStatus:variant {Empty:int; Full:int; Half:int}; longitude:text}) -> (variant {Ok:record {id:text; latitude:text; vehicleType:text; licensePlate:text; createdAt:nat64; fuelStatus:variant {Empty:int; Full:int; Half:int}; updatedAt:opt nat64; longitude:text}; Err:variant {InvalidPayload:text; NotFound:text}});
-    deleteVehicle: (text) -> (variant {Ok:record {id:text; latitude:text; vehicleType:text; licensePlate:text; createdAt:nat64; fuelStatus:variant {Empty:int; Full:int; Half:int}; updatedAt:opt nat64; longitude:text}; Err:variant {InvalidPayload:text; NotFound:text}});
-    getVehicle: (text) -> (variant {Ok:record {id:text; latitude:text; vehicleType:text; licensePlate:text; createdAt:nat64; fuelStatus:variant {Empty:int; Full:int; Half:int}; updatedAt:opt nat64; longitude:text}; Err:variant {InvalidPayload:text; NotFound:text}}) query;
-    getVehicles: () -> (variant {Ok:vec record {id:text; latitude:text; vehicleType:text; licensePlate:text; createdAt:nat64; fuelStatus:variant {Empty:int; Full:int; Half:int}; updatedAt:opt nat64; longitude:text}; Err:variant {InvalidPayload:text; NotFound:text}}) query;
-    updateVehicle: (text, record {latitude:text; vehicleType:text; licensePlate:text; fuelStatus:variant {Empty:int; Full:int; Half:int}; longitude:text}) -> (variant {Ok:record {id:text; latitude:text; vehicleType:text; licensePlate:text; createdAt:nat64; fuelStatus:variant {Empty:int; Full:int; Half:int}; updatedAt:opt nat64; longitude:text}; Err:variant {InvalidPayload:text; NotFound:text}});
+type Error = record { InvalidPayload : text; NotFound : text };
+type Vehicle = record {
+  id : text;
+  latitude : text;
+  vehicleType : text;
+  licensePlate : text;
+  createdAt : nat64;
+  fuelStatus : _InlineVehicleFuelStatus;
+  updatedAt : opt nat64;
+  longitude : text;
+};
+type VehicleData = record {
+  latitude : text;
+  vehicleType : text;
+  licensePlate : text;
+  fuelStatus : _InlineVehicleFuelStatus;
+  longitude : text;
+};
+type _AzleResult = variant { Ok : Vehicle; Err : Error };
+type _AzleResult_1 = variant { Ok : Vehicle; Err : text };
+type _AzleResult_2 = variant { Ok : vec Vehicle; Err : Error };
+type _InlineVehicleDataFuelStatus = record {
+  Empty : float64;
+  Full : float64;
+  Half : float64;
+};
+type _InlineVehicleFuelStatus = record {
+  Empty : float64;
+  Full : float64;
+  Half : float64;
+};
+service : () -> {
+  addVehicle : (VehicleData) -> (_AzleResult);
+  deleteVehicle : (text) -> (_AzleResult_1);
+  getVehicle : (text) -> (_AzleResult_1) query;
+  getVehicles : () -> (_AzleResult_2) query;
+  updateVehicle : (text, VehicleData) -> (_AzleResult_1);
 }
